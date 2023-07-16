@@ -78,3 +78,17 @@ x1.gradient = x1w1.gradient * w1.data
 w2.gradient = x2w2.gradient * x2.data
 x2.gradient = x2w2.gradient * w2.data
 </pre>
+
+# backprop
+<pre>
+# inintializing the gradient of the output
+out.gradient = 1.0
+
+# backpropogation
+out._backward()
+n._backward()
+b._backward()
+x1w1x2w2._backward()
+x2w2._backward()
+x1w1._backward()
+</pre>
