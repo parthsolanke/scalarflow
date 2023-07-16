@@ -46,3 +46,35 @@ def draw_graph(root):
 
   return dot
 </pre>
+
+# manual backprop
+<pre>
+# manual backpropogation
+# manually calculating the gradient of out wrt x1, x2, w1, w2, b
+
+# dout/dout = 1
+out.gradient = 1.0
+
+# dout/dn = 1 - (tanh(n))^2
+n.gradient = out.gradient * (1 - (out.data)**2)
+
+# dout/d(x1*w1 + x2*w2) = dout/dn * dn/d(x1*w1 + x2*w2)
+# dn/d(x1*w1 + x2*w2) = 1
+# dout/d(x1*w1 + x2*w2) = dout/dn || dout/db = dout/dn
+x1w1x2w2.gradient = n.gradient
+b.gradient = n.gradient
+
+# dout/d(x1*w1) = dout/d(x1*w1 + x2*w2) * d(x1*w1 + x2*w2)/d(x1*w1)
+# d(x1*w1 + x2*w2)/d(x1*w1) = 1
+# dout/d(x1*w1) = dout/d(x1*w1 + x2*w2) || dout/d(x2*w2) = dout/d(x1*w1 + x2*w2)
+x1w1.gradient = x1w1x2w2.gradient
+x2w2.gradient = x1w1x2w2.gradient
+
+# dout/dw1 = dout/d(x1*w1) * d(x1*w1)/dw1
+# dout/dw1 = x1w1.gradient * x1 || dout/dx1 = x1w1.gradient * w1
+# dout/dw2 = x2w2.gradient * x2 || dout/dx2 = x2w2.gradient * w2
+w1.gradient = x1w1.gradient * x1.data
+x1.gradient = x1w1.gradient * w1.data
+w2.gradient = x2w2.gradient * x2.data
+x2.gradient = x2w2.gradient * w2.data
+</pre>
