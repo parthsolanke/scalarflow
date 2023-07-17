@@ -1,3 +1,5 @@
+from graphviz import Digraph
+import math
 
 class value:
     
@@ -155,11 +157,11 @@ class value:
                 # if this value is a result of some operation, create an operation node for it
                 _dot.node(name = uid + n._operation, label = n._operation, shape='circle', style='filled', fillcolor='orange')
                 # and connect this node to it
-                _dot.edge(uid + n._operation, uid, style='dashed', color='orange')
+                _dot.edge(uid + n._operation, uid, style='dashed')
 
         for n1, n2 in edges:
             # connect n1 to the operation node of n2
-            _dot.edge(str(id(n1)), str(id(n2)) + n2._operation, style='dashed', color='orange')
+            _dot.edge(str(id(n1)), str(id(n2)) + n2._operation, style='dashed')
 
         return _dot
     '''</visualization methods>'''
