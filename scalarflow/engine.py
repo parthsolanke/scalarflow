@@ -8,11 +8,11 @@ class value:
         self._prev = set(_parents)
         self._operation = _operation
         self.label = label
-        self.gradient = 0.0
+        self.gradient = 0
         self._backward = lambda: None
         
     def __repr__(self):
-        return f'value(data = {self.data})'
+        return f'value(data = {self.data}, grad = {self.gradient})'
     
     '''<overloading operators>'''
     def __add__(self, other):
@@ -20,8 +20,8 @@ class value:
         sum = value(self.data + other.data, (self, other), '+')
         
         def _backward():
-            self.gradient += 1.0 * sum.gradient
-            other.gradient += 1.0 * sum.gradient
+            self.gradient += sum.gradient
+            other.gradient += sum.gradient
         sum._backward = _backward
         
         return sum
@@ -53,7 +53,7 @@ class value:
         return self * other
     
     def __pow__(self, other):
-        assert isinstance(other, (int, float)), 'only supporting int and float powers for now'
+        assert isinstance(other, (int, float)), 'only supporting int and float powers'
         out = value(self.data**other, (self,), f'**{other}')
         
         def _backward():
@@ -92,7 +92,7 @@ class value:
         return t
     
     def relu(self):
-        out = value(self.data if self.data > 0 else 0, (self, ), 'relu')
+        out = value(0 if self.data < 0 else self.data, (self, ), 'relu')
         
         def _backward():
             self.gradient += (out.data > 0) * out.gradient 
@@ -125,7 +125,7 @@ class value:
         build(self)
         
         # go one variable at a time and apply chain rule to it
-        self.gradient = 1.0
+        self.gradient = 1
         for node in reversed(topo):
             node._backward()
     '''</backpropagation>'''
