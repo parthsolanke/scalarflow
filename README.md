@@ -15,6 +15,6 @@ This project is a simple neural network library implemented from scratch in Pyth
 ## Dependencies
 The neural network library has the following dependencies:
 
--Python (>=3.6)
--Graphviz (for visualization)
+- Python (>=3.6)
+- Graphviz (for visualization)
 
