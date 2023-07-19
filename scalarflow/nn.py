@@ -1,4 +1,5 @@
 import random
+import numpy as np
 from scalarflow.engine import value
 
 class module:
@@ -86,25 +87,45 @@ class network(module):
         print(f"Total number of weights: {sum(len(layer.neurons[0].weights) for layer in self.layers)}")
         print(f"Total number of biases: {sum(len(layer.neurons) for layer in self.layers)}")
         
-    def loss(self, x, y):
-        Xb, yb = x, y
-        scores = list(map(self, Xb))
+    def svm_loss(self, x, y, batch_size=None):
+        
+        # inline dataloder
+        if batch_size is None:
+            Xb, yb = x, y
+        else:
+            ri = np.random.permutation(x.shape[0])[:batch_size]
+            Xb, yb = x[ri], y[ri]
+        inputs = [list(map(value, xrow)) for xrow in Xb]
+        
+        scores = list(map(self, inputs))
+        
+        # svm "max-margin" loss
+        losses = [(1 + -yi*scorei).relu() for yi, scorei in zip(yb, scores)]
+        data_loss = sum(losses) * (1.0 / len(losses))
+        
+        # regularization
+        lam = 0.0001
+        reg_loss  = lam * sum((p*p for p in self.parameters()))
+        total_loss = data_loss + reg_loss
+        
+        accuracy = [(yi > 0) == (scorei.data > 0) for yi, scorei in zip(yb, scores)]
+        return total_loss, sum(accuracy) / len(accuracy)
+    
+    def mse_loss(self, x, y):
+        scores = list(map(self, x))
         # mse
-        loss  = (sum((s-y)**2 for s,y in zip(scores, yb))/len(scores))
+        loss  = sum((s-y_pred)**2 for s,y_pred in zip(scores, y))
         # regularization
         lam = 0.00001
-        reg_loss  = lam * (sum(p**2 for p in self.parameters())/len(self.parameters()))
+        reg_loss  = lam * sum(p**2 for p in self.parameters())
         
-        total_loss = loss + reg_loss
-        
+        total_loss = (loss + reg_loss) * (1.0 / (2*len(scores)))
         return total_loss
         
     def fit(self, x, y, epochs):
         for epoch in range(epochs):
             # forward pass
-            out = [self(xi) for xi in x]
-            #loss = sum((pred - org)**2 for org, pred in zip(y, out))
-            loss = self.loss(x, y)
+            loss = self.mse_loss(x, y)
             
             # setting the gradient to zero for each parameter
             self.zero_grad()
@@ -114,8 +135,8 @@ class network(module):
             # update parameters
             alpha = 1.0 - 0.9*epoch/100
             for param in self.parameters():
-                param.data -= param.gradient * alpha
-                
+                param.data -= alpha * param.gradient
+               
             if epoch % 10 == 0:
                 print(f'Epoch: {epoch+1}/{epochs} - Loss: {loss.data:.4f}')
                 
