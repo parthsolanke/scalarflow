@@ -44,7 +44,7 @@ d.backward()
 # Print results
 print("c =", c)  # Output: c = value(data = 5, grad = 1)
 print("d =", d)  # Output: d = value(data = 6, grad = 2)
-'''python
+'''
 
 Neural Network Library
 '''python
@@ -66,4 +66,4 @@ model.fit(inputs, outputs, epochs=100)
 # Make predictions
 predictions = model.predict(inputs)
 print(predictions)
-'''python
+'''
