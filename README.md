@@ -20,13 +20,13 @@ The neural network library has the following dependencies:
 
 ## Usage
 
--Import the necessary modules and classes.
--Define your mathematical expressions using the value class from the autograd engine.
--Create your neural network model by composing layers and neurons from the neural network library.
--Train your neural network using the provided methods for different loss functions.
+- Import the necessary modules and classes.
+- Define your mathematical expressions using the value class from the autograd engine.
+- Create your neural network model by composing layers and neurons from the neural network library.
+- Train your neural network using the provided methods for different loss functions.
 
 Autograd Engine
-'''python
+```python
 # Example usage of the autograd engine
 from scalarflow.engine import value
 
@@ -44,10 +44,10 @@ d.backward()
 # Print results
 print("c =", c)  # Output: c = value(data = 5, grad = 1)
 print("d =", d)  # Output: d = value(data = 6, grad = 2)
-'''
+```
 
 Neural Network Library
-'''python
+```python
 # Example usage of the neural network library
 from scalarflow.nn import network
 
@@ -66,4 +66,4 @@ model.fit(inputs, outputs, epochs=100)
 # Make predictions
 predictions = model.predict(inputs)
 print(predictions)
-'''
+```
