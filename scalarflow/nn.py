@@ -89,22 +89,22 @@ class network(module):
     def loss(self, x, y):
         Xb, yb = x, y
         scores = list(map(self, Xb))
+        # mse
         loss  = (sum((s-y)**2 for s,y in zip(scores, yb))/len(scores))
         # regularization
         lam = 0.00001
         reg_loss  = lam * (sum(p**2 for p in self.parameters())/len(self.parameters()))
         
         total_loss = loss + reg_loss
-        accuracy = [(yi > 0) == (scorei.data > 0) for yi, scorei in zip(yb, scores)]
         
-        return total_loss, sum(accuracy) / len(accuracy)
+        return total_loss
         
-    def fit(self, x, y, epochs, alpha):
+    def fit(self, x, y, epochs):
         for epoch in range(epochs):
             # forward pass
             out = [self(xi) for xi in x]
             #loss = sum((pred - org)**2 for org, pred in zip(y, out))
-            loss, acc = self.loss(x, y)
+            loss = self.loss(x, y)
             
             # setting the gradient to zero for each parameter
             self.zero_grad()
@@ -112,11 +112,12 @@ class network(module):
             loss.backward()
             
             # update parameters
+            alpha = 1.0 - 0.9*epoch/100
             for param in self.parameters():
                 param.data -= param.gradient * alpha
                 
             if epoch % 10 == 0:
-                print(f'Epoch: {epoch+1}/{epochs} | Loss: {loss.data:.4f} | Accuracy: {acc:.4f}, {acc*100}%')
+                print(f'Epoch: {epoch+1}/{epochs} - Loss: {loss.data:.4f}')
                 
     def predict(self, x):
         return [self(xi).data for xi in x]
