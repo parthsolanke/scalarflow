@@ -10,14 +10,6 @@ The neural network library has the following dependencies:
 - Python (>=3.6)
 - Graphviz (for visualization)
 
-## Features
-
-- Implementation of a custom auto-gradient engine for automatic differentiation.
-- Definition of neural network layers with customizable activation functions.
-- Support for common activation functions: sigmoid, tanh, and relu.
-- Training loop using gradient descent optimization algorithm.
-- Visualizations of computation graphs using Graphviz.
-
 ## Usage
 
 - Import the necessary modules and classes.
@@ -67,3 +59,11 @@ model.fit(inputs, outputs, epochs=100)
 predictions = model.predict(inputs)
 print(predictions)
 ```
+
+## Features
+
+- Implementation of a custom auto-gradient engine for automatic differentiation.
+- Definition of neural network layers with customizable activation functions.
+- Support for common activation functions: sigmoid, tanh, and relu.
+- Training loop using gradient descent optimization algorithm.
+- Visualizations of computation graphs using Graphviz.
