@@ -67,3 +67,53 @@ model.fit(inputs, outputs, epochs=100)
 predictions = model.predict(inputs)
 print(predictions)
 ```
+
+## HTTP API
+
+A small Go HTTP server in `server/` exposes the library over JSON. It calls the
+Python package through `server/bridge.py`, so the Python dependencies are still
+required.
+
+```bash
+cd server
+go run .
+```
+
+The server listens on `:8080` by default. Override it with `SCALARFLOW_ADDR`
+(for example `SCALARFLOW_ADDR=:9090`), the interpreter with `SCALARFLOW_PYTHON`,
+and the bridge location with `SCALARFLOW_BRIDGE`.
+
+Endpoints:
+
+- `GET /health`
+- `POST /v1/train` — train a new network or continue training a supplied model.
+- `POST /v1/predict` — run inference for a supplied model.
+- `POST /v1/summary` — return parameter counts for a supplied model.
+
+Training example:
+
+```bash
+curl -s http://localhost:8080/v1/train \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "num_in": 2,
+    "layer_sizes": [4, 2, 1],
+    "activation": "relu",
+    "inputs": [[0, 0], [0, 1], [1, 0], [1, 1]],
+    "outputs": [0, 1, 1, 0],
+    "epochs": 100
+  }'
+```
+
+The response contains the trained `model` (weights and biases), its
+`predictions`, and the final `loss`. Pass that `model` object back to
+`/v1/predict`, `/v1/summary`, or `/v1/train` to reuse or keep training it.
+
+Prediction example:
+
+```bash
+curl -s http://localhost:8080/v1/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"model": { ... }, "inputs": [[0, 0], [1, 1]]}'
+```
+
