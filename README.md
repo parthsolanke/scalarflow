@@ -165,3 +165,35 @@ func main() {
 an `*client.APIError` for non-2xx responses. `client.NewWithHTTPClient` accepts
 a custom `*http.Client`.
 
+## JavaScript client
+
+A dependency-free JavaScript client lives in `server/client/client.js`. It uses
+the built-in `fetch`, so it runs on Node 18+ or in a modern browser.
+
+```js
+const { Client } = require('./server/client/client.js');
+
+const client = new Client('http://localhost:8080');
+
+const trained = await client.Train({
+  num_in: 2,
+  layer_sizes: [4, 2, 1],
+  activation: 'relu',
+  inputs: [[0, 0], [0, 1], [1, 0], [1, 1]],
+  outputs: [0, 1, 1, 0],
+  epochs: 100,
+});
+
+const predicted = await client.Predict({
+  model: trained.model,
+  inputs: [[0, 0], [1, 1]],
+});
+
+console.log(predicted.predictions, trained.loss);
+```
+
+`Health`, `Train`, `Predict` and `Summary` return promises and reject with an
+`APIError` (with a `statusCode` property) for non-2xx responses. The constructor
+accepts an optional `{ fetch, timeout }` object, where `timeout` is in
+milliseconds and defaults to two minutes.
+
