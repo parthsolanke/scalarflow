@@ -117,3 +117,51 @@ curl -s http://localhost:8080/v1/predict \
   -d '{"model": { ... }, "inputs": [[0, 0], [1, 1]]}'
 ```
 
+## Go client
+
+A Go client for the HTTP API lives in `server/client`. It shares the server
+module, so import it as `scalarflow-server/client`.
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"scalarflow-server/client"
+)
+
+func main() {
+	c := client.New("http://localhost:8080")
+	ctx := context.Background()
+
+	trained, err := c.Train(ctx, client.TrainRequest{
+		NumIn:      2,
+		LayerSizes: []int{4, 2, 1},
+		Activation: "relu",
+		Inputs:     [][]float64{{0, 0}, {0, 1}, {1, 0}, {1, 1}},
+		Outputs:    []float64{0, 1, 1, 0},
+		Epochs:     100,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	predicted, err := c.Predict(ctx, client.PredictRequest{
+		Model:  trained.Model,
+		Inputs: [][]float64{{0, 0}, {1, 1}},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(predicted.Predictions, *trained.Loss)
+}
+```
+
+`Health`, `Train`, `Predict` and `Summary` take a `context.Context` and return
+an `*client.APIError` for non-2xx responses. `client.NewWithHTTPClient` accepts
+a custom `*http.Client`.
+
