@@ -131,6 +131,14 @@ func main() {
 	mux.HandleFunc("/v1/predict", srv.handlePredict)
 	mux.HandleFunc("/v1/summary", srv.handleSummary)
 
+	playground, err := resolvePlayground()
+	if err != nil {
+		log.Printf("playground disabled: %v", err)
+	} else {
+		mux.Handle("/", http.FileServer(http.Dir(playground)))
+		log.Printf("scalarflow playground available at / (from %s)", playground)
+	}
+
 	httpServer := &http.Server{
 		Addr:              addr,
 		Handler:           withJSON(mux),
@@ -164,9 +172,27 @@ func resolveBridge() (string, error) {
 	return "", errors.New("could not find bridge.py; set SCALARFLOW_BRIDGE")
 }
 
+func resolvePlayground() (string, error) {
+	if path := strings.TrimSpace(os.Getenv("SCALARFLOW_PLAYGROUND")); path != "" {
+		return path, nil
+	}
+	candidates := []string{"playground", filepath.Join("server", "playground")}
+	if executable, err := os.Executable(); err == nil {
+		candidates = append(candidates, filepath.Join(filepath.Dir(executable), "playground"))
+	}
+	for _, candidate := range candidates {
+		if info, err := os.Stat(candidate); err == nil && info.IsDir() {
+			return candidate, nil
+		}
+	}
+	return "", errors.New("could not find playground directory; set SCALARFLOW_PLAYGROUND")
+}
+
 func withJSON(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		if strings.HasPrefix(r.URL.Path, "/v1/") || r.URL.Path == "/health" {
+			w.Header().Set("Content-Type", "application/json")
+		}
 		next.ServeHTTP(w, r)
 	})
 }

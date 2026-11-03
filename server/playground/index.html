@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ScalarFlow Playground</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0f172a;
+        --panel: #1e293b;
+        --panel-soft: #273449;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+        --accent-strong: #0ea5e9;
+        --border: #334155;
+        --ok: #22c55e;
+        --error: #f87171;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top left, #12304a, var(--bg) 55%);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        line-height: 1.5;
+      }
+
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.5rem clamp(1rem, 4vw, 3rem);
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 1.35rem;
+        letter-spacing: -0.01em;
+      }
+
+      header p {
+        margin: 0.15rem 0 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0.8rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: 0.8rem;
+        color: var(--muted);
+        background: rgba(15, 23, 42, 0.6);
+      }
+
+      .status .dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+
+      .status.ok .dot {
+        background: var(--ok);
+      }
+
+      .status.error .dot {
+        background: var(--error);
+      }
+
+      main {
+        display: grid;
+        gap: 1.25rem;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        padding: 0 clamp(1rem, 4vw, 3rem) 3rem;
+      }
+
+      @media (max-width: 900px) {
+        main {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      .panel {
+        background: linear-gradient(180deg, var(--panel), #182234);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: 0 20px 50px rgba(2, 6, 23, 0.35);
+        min-width: 0;
+      }
+
+      .panel h2 {
+        margin: 0 0 1rem;
+        font-size: 1rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        margin-bottom: 0.9rem;
+      }
+
+      .field label {
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      .grid-two {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      input,
+      select,
+      textarea,
+      button {
+        font: inherit;
+        color: var(--text);
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 0.55rem 0.7rem;
+        background: #0b1424;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        outline: none;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+      }
+
+      textarea {
+        min-height: 7rem;
+        resize: vertical;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.82rem;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-top: 0.35rem;
+      }
+
+      button {
+        cursor: pointer;
+        border: 1px solid var(--border);
+        background: var(--panel-soft);
+        border-radius: 10px;
+        padding: 0.55rem 0.9rem;
+        transition: transform 0.05s ease, background 0.15s ease;
+      }
+
+      button:hover {
+        background: #31425c;
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      button.primary {
+        background: var(--accent-strong);
+        border-color: var(--accent-strong);
+        color: #062133;
+        font-weight: 600;
+      }
+
+      button.primary:hover {
+        background: var(--accent);
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.82rem;
+        color: var(--muted);
+        margin-bottom: 0.9rem;
+      }
+
+      .checkbox input {
+        width: auto;
+      }
+
+      .error-box {
+        display: none;
+        margin-bottom: 1rem;
+        padding: 0.75rem 0.9rem;
+        border-radius: 10px;
+        border: 1px solid rgba(248, 113, 113, 0.45);
+        background: rgba(248, 113, 113, 0.1);
+        color: #fecaca;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+      }
+
+      .error-box.visible {
+        display: block;
+      }
+
+      .metric-row {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        margin-bottom: 1rem;
+      }
+
+      .metric {
+        background: #0b1424;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.7rem 0.8rem;
+      }
+
+      .metric .label {
+        font-size: 0.72rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .metric .value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 0.45rem 0.55rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      td {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .empty {
+        color: var(--muted);
+        font-size: 0.85rem;
+        padding: 0.5rem 0;
+      }
+
+      details {
+        border-top: 1px solid var(--border);
+        padding-top: 0.75rem;
+      }
+
+      summary {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      pre {
+        margin: 0.75rem 0 0;
+        padding: 0.8rem;
+        max-height: 18rem;
+        overflow: auto;
+        background: #0b1424;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 0.75rem;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>ScalarFlow Playground</h1>
+        <p>Build, train and inspect a network against the local HTTP API.</p>
+      </div>
+      <div id="status" class="status">
+        <span class="dot"></span>
+        <span id="status-text">checking server…</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel">
+        <h2>Configuration</h2>
+
+        <div class="grid-two">
+          <div class="field">
+            <label for="num-in">Inputs (num_in)</label>
+            <input id="num-in" type="number" min="1" value="2" />
+          </div>
+          <div class="field">
+            <label for="activation">Activation</label>
+            <select id="activation">
+              <option value="relu">relu</option>
+              <option value="sigmoid">sigmoid</option>
+              <option value="tanh">tanh</option>
+              <option value="">none</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="layer-sizes">Layer sizes (comma separated)</label>
+          <input id="layer-sizes" type="text" value="4, 2, 1" />
+        </div>
+
+        <div class="field">
+          <label for="epochs">Epochs</label>
+          <input id="epochs" type="number" min="1" value="1000" />
+        </div>
+
+        <div class="field">
+          <label for="inputs">Inputs (JSON rows)</label>
+          <textarea id="inputs">[[0, 0], [0, 1], [1, 0], [1, 1]]</textarea>
+        </div>
+
+        <div class="field">
+          <label for="outputs">Outputs (JSON targets)</label>
+          <textarea id="outputs">[0, 1, 1, 0]</textarea>
+        </div>
+
+        <label class="checkbox">
+          <input id="continue" type="checkbox" />
+          Continue training the last model
+        </label>
+
+        <div class="actions">
+          <button id="train" class="primary" type="button">Train</button>
+          <button id="predict" type="button">Predict</button>
+          <button id="summary" type="button">Summary</button>
+          <button id="reset" type="button">Reset model</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Results</h2>
+        <div id="error" class="error-box"></div>
+
+        <div class="metric-row">
+          <div class="metric">
+            <div class="label">Loss</div>
+            <div id="metric-loss" class="value">—</div>
+          </div>
+          <div class="metric">
+            <div class="label">Parameters</div>
+            <div id="metric-params" class="value">—</div>
+          </div>
+          <div class="metric">
+            <div class="label">Rows</div>
+            <div id="metric-rows" class="value">—</div>
+          </div>
+        </div>
+
+        <div id="predictions-wrap">
+          <div class="empty">Train or predict to see output for each input row.</div>
+        </div>
+
+        <details id="model-details">
+          <summary>Model JSON</summary>
+          <pre id="model-json">No model yet.</pre>
+        </details>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var state = { model: null, busy: false };
+
+        var els = {
+          status: document.getElementById("status"),
+          statusText: document.getElementById("status-text"),
+          numIn: document.getElementById("num-in"),
+          layerSizes: document.getElementById("layer-sizes"),
+          activation: document.getElementById("activation"),
+          epochs: document.getElementById("epochs"),
+          inputs: document.getElementById("inputs"),
+          outputs: document.getElementById("outputs"),
+          continueTraining: document.getElementById("continue"),
+          train: document.getElementById("train"),
+          predict: document.getElementById("predict"),
+          summary: document.getElementById("summary"),
+          reset: document.getElementById("reset"),
+          error: document.getElementById("error"),
+          loss: document.getElementById("metric-loss"),
+          params: document.getElementById("metric-params"),
+          rows: document.getElementById("metric-rows"),
+          predictions: document.getElementById("predictions-wrap"),
+          modelJson: document.getElementById("model-json"),
+        };
+
+        function setStatus(kind, text) {
+          els.status.className = "status" + (kind ? " " + kind : "");
+          els.statusText.textContent = text;
+        }
+
+        function setBusy(busy) {
+          state.busy = busy;
+          [els.train, els.predict, els.summary].forEach(function (button) {
+            button.disabled = busy;
+          });
+        }
+
+        function showError(message) {
+          els.error.textContent = message;
+          els.error.classList.add("visible");
+        }
+
+        function clearError() {
+          els.error.textContent = "";
+          els.error.classList.remove("visible");
+        }
+
+        function parseJSON(value, label) {
+          try {
+            return JSON.parse(value);
+          } catch (err) {
+            throw new Error(label + " is not valid JSON: " + err.message);
+          }
+        }
+
+        function parseLayerSizes(value) {
+          var sizes = String(value)
+            .split(/[\s,]+/)
+            .filter(function (part) {
+              return part !== "";
+            })
+            .map(function (part) {
+              var size = Number(part);
+              if (!Number.isInteger(size) || size < 1) {
+                throw new Error("Layer sizes must be positive integers.");
+              }
+              return size;
+            });
+          if (!sizes.length) {
+            throw new Error("Add at least one layer size.");
+          }
+          return sizes;
+        }
+
+        async function api(path, body) {
+          var init = { method: body === undefined ? "GET" : "POST", headers: { Accept: "application/json" } };
+          if (body !== undefined) {
+            init.headers["Content-Type"] = "application/json";
+            init.body = JSON.stringify(body);
+          }
+          var response = await fetch(path, init);
+          var text = await response.text();
+          var data = null;
+          if (text) {
+            try {
+              data = JSON.parse(text);
+            } catch (err) {
+              data = null;
+            }
+          }
+          if (!response.ok) {
+            var message =
+              data && typeof data.error === "string" && data.error
+                ? data.error
+                : text.trim() || response.statusText || "request failed";
+            throw new Error(message);
+          }
+          return data;
+        }
+
+        function setModel(model) {
+          state.model = model;
+          els.modelJson.textContent = model ? JSON.stringify(model, null, 2) : "No model yet.";
+          if (!model) {
+            els.params.textContent = "—";
+          }
+        }
+
+        function renderPredictions(inputs, predictions) {
+          if (!predictions || !predictions.length) {
+            els.predictions.innerHTML = '<div class="empty">No predictions returned.</div>';
+            els.rows.textContent = "0";
+            return;
+          }
+          var rows = predictions
+            .map(function (value, index) {
+              var input = inputs && inputs[index] ? JSON.stringify(inputs[index]) : "";
+              return (
+                "<tr><td>" +
+                index +
+                "</td><td>" +
+                escapeHTML(input) +
+                "</td><td>" +
+                formatNumber(value) +
+                "</td></tr>"
+              );
+            })
+            .join("");
+          els.predictions.innerHTML =
+            "<table><thead><tr><th>#</th><th>Input</th><th>Prediction</th></tr></thead><tbody>" +
+            rows +
+            "</tbody></table>";
+          els.rows.textContent = String(predictions.length);
+        }
+
+        function formatNumber(value) {
+          if (typeof value !== "number" || !isFinite(value)) {
+            return String(value);
+          }
+          return value.toFixed(6);
+        }
+
+        function escapeHTML(value) {
+          return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        async function train() {
+          clearError();
+          var inputs = parseJSON(els.inputs.value, "Inputs");
+          var outputs = parseJSON(els.outputs.value, "Outputs");
+          var epochs = Number(els.epochs.value);
+
+          var body;
+          if (els.continueTraining.checked) {
+            if (!state.model) {
+              throw new Error("Train a model before continuing training.");
+            }
+            body = { model: state.model, inputs: inputs, outputs: outputs, epochs: epochs };
+          } else {
+            body = {
+              num_in: Number(els.numIn.value),
+              layer_sizes: parseLayerSizes(els.layerSizes.value),
+              activation: els.activation.value,
+              inputs: inputs,
+              outputs: outputs,
+              epochs: epochs,
+            };
+          }
+
+          setBusy(true);
+          setStatus("", "training…");
+          try {
+            var result = await api("/v1/train", body);
+            setModel(result.model);
+            renderPredictions(inputs, result.predictions);
+            if (typeof result.loss === "number") {
+              els.loss.textContent = formatNumber(result.loss);
+            }
+            setStatus("ok", "trained");
+          } catch (err) {
+            setStatus("error", "error");
+            showError(err.message);
+          } finally {
+            setBusy(false);
+          }
+        }
+
+        async function predict() {
+          clearError();
+          var inputs = parseJSON(els.inputs.value, "Inputs");
+          if (!state.model) {
+            throw new Error("Train a model before predicting.");
+          }
+          setBusy(true);
+          setStatus("", "predicting…");
+          try {
+            var result = await api("/v1/predict", { model: state.model, inputs: inputs });
+            renderPredictions(inputs, result.predictions);
+            setStatus("ok", "predicted");
+          } catch (err) {
+            setStatus("error", "error");
+            showError(err.message);
+          } finally {
+            setBusy(false);
+          }
+        }
+
+        async function summary() {
+          clearError();
+          if (!state.model) {
+            throw new Error("Train a model before requesting a summary.");
+          }
+          setBusy(true);
+          setStatus("", "summarising…");
+          try {
+            var result = await api("/v1/summary", { model: state.model });
+            if (result.stats) {
+              els.params.textContent = String(result.stats.parameters);
+            }
+            if (result.model) {
+              setModel(result.model);
+              els.params.textContent = result.stats ? String(result.stats.parameters) : els.params.textContent;
+            }
+            setStatus("ok", "summary ready");
+          } catch (err) {
+            setStatus("error", "error");
+            showError(err.message);
+          } finally {
+            setBusy(false);
+          }
+        }
+
+        function reset() {
+          clearError();
+          setModel(null);
+          els.loss.textContent = "—";
+          els.rows.textContent = "—";
+          els.predictions.innerHTML =
+            '<div class="empty">Train or predict to see output for each input row.</div>';
+          setStatus("ok", "model reset");
+        }
+
+        async function checkHealth() {
+          try {
+            await api("/health");
+            setStatus("ok", "server online");
+          } catch (err) {
+            setStatus("error", "server offline");
+          }
+        }
+
+        els.train.addEventListener("click", function () {
+          train();
+        });
+        els.predict.addEventListener("click", function () {
+          predict();
+        });
+        els.summary.addEventListener("click", function () {
+          summary();
+        });
+        els.reset.addEventListener("click", reset);
+
+        checkHealth();
+      })();
+    </script>
+  </body>
+</html>

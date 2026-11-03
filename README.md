@@ -197,3 +197,13 @@ console.log(predicted.predictions, trained.loss);
 accepts an optional `{ fetch, timeout }` object, where `timeout` is in
 milliseconds and defaults to two minutes.
 
+## Playground
+
+The server also serves a browser playground from `server/playground`. Start the
+server and open <http://localhost:8080> to configure a network, train it on
+JSON inputs and outputs, inspect predictions and loss, and view the serialized
+model. It talks to the same `/v1/*` endpoints, so no extra dependencies or build
+step are required.
+
+Set `SCALARFLOW_PLAYGROUND` to serve the page from a different directory.
+
