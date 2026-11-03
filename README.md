@@ -67,3 +67,143 @@ model.fit(inputs, outputs, epochs=100)
 predictions = model.predict(inputs)
 print(predictions)
 ```
+
+## HTTP API
+
+A small Go HTTP server in `server/` exposes the library over JSON. It calls the
+Python package through `server/bridge.py`, so the Python dependencies are still
+required.
+
+```bash
+cd server
+go run .
+```
+
+The server listens on `:8080` by default. Override it with `SCALARFLOW_ADDR`
+(for example `SCALARFLOW_ADDR=:9090`), the interpreter with `SCALARFLOW_PYTHON`,
+and the bridge location with `SCALARFLOW_BRIDGE`.
+
+Endpoints:
+
+- `GET /health`
+- `POST /v1/train` — train a new network or continue training a supplied model.
+- `POST /v1/predict` — run inference for a supplied model.
+- `POST /v1/summary` — return parameter counts for a supplied model.
+
+Training example:
+
+```bash
+curl -s http://localhost:8080/v1/train \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "num_in": 2,
+    "layer_sizes": [4, 2, 1],
+    "activation": "relu",
+    "inputs": [[0, 0], [0, 1], [1, 0], [1, 1]],
+    "outputs": [0, 1, 1, 0],
+    "epochs": 100
+  }'
+```
+
+The response contains the trained `model` (weights and biases), its
+`predictions`, and the final `loss`. Pass that `model` object back to
+`/v1/predict`, `/v1/summary`, or `/v1/train` to reuse or keep training it.
+
+Prediction example:
+
+```bash
+curl -s http://localhost:8080/v1/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"model": { ... }, "inputs": [[0, 0], [1, 1]]}'
+```
+
+## Go client
+
+A Go client for the HTTP API lives in `server/client`. It shares the server
+module, so import it as `scalarflow-server/client`.
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"scalarflow-server/client"
+)
+
+func main() {
+	c := client.New("http://localhost:8080")
+	ctx := context.Background()
+
+	trained, err := c.Train(ctx, client.TrainRequest{
+		NumIn:      2,
+		LayerSizes: []int{4, 2, 1},
+		Activation: "relu",
+		Inputs:     [][]float64{{0, 0}, {0, 1}, {1, 0}, {1, 1}},
+		Outputs:    []float64{0, 1, 1, 0},
+		Epochs:     100,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	predicted, err := c.Predict(ctx, client.PredictRequest{
+		Model:  trained.Model,
+		Inputs: [][]float64{{0, 0}, {1, 1}},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(predicted.Predictions, *trained.Loss)
+}
+```
+
+`Health`, `Train`, `Predict` and `Summary` take a `context.Context` and return
+an `*client.APIError` for non-2xx responses. `client.NewWithHTTPClient` accepts
+a custom `*http.Client`.
+
+## JavaScript client
+
+A dependency-free JavaScript client lives in `server/client/client.js`. It uses
+the built-in `fetch`, so it runs on Node 18+ or in a modern browser.
+
+```js
+const { Client } = require('./server/client/client.js');
+
+const client = new Client('http://localhost:8080');
+
+const trained = await client.Train({
+  num_in: 2,
+  layer_sizes: [4, 2, 1],
+  activation: 'relu',
+  inputs: [[0, 0], [0, 1], [1, 0], [1, 1]],
+  outputs: [0, 1, 1, 0],
+  epochs: 100,
+});
+
+const predicted = await client.Predict({
+  model: trained.model,
+  inputs: [[0, 0], [1, 1]],
+});
+
+console.log(predicted.predictions, trained.loss);
+```
+
+`Health`, `Train`, `Predict` and `Summary` return promises and reject with an
+`APIError` (with a `statusCode` property) for non-2xx responses. The constructor
+accepts an optional `{ fetch, timeout }` object, where `timeout` is in
+milliseconds and defaults to two minutes.
+
+## Playground
+
+The server also serves a browser playground from `server/playground`. Start the
+server and open <http://localhost:8080> to configure a network, train it on
+JSON inputs and outputs, inspect predictions and loss, and view the serialized
+model. It talks to the same `/v1/*` endpoints, so no extra dependencies or build
+step are required.
+
+Set `SCALARFLOW_PLAYGROUND` to serve the page from a different directory.
+
