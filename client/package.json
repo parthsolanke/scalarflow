@@ -1,0 +1,11 @@
+{
+  "name": "scalarflow-client",
+  "version": "0.1.0",
+  "description": "JavaScript client for the ScalarFlow HTTP API",
+  "type": "module",
+  "main": "client.js",
+  "exports": "./client.js",
+  "engines": {
+    "node": ">=18"
+  }
+}
