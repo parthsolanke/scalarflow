@@ -1,0 +1,10 @@
+[package]
+name = "scalarflow-client"
+version = "0.1.0"
+edition = "2021"
+description = "Rust client for the ScalarFlow HTTP API"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = "2"
