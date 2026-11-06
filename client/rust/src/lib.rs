@@ -225,3 +225,95 @@ fn encode_segment(segment: &str) -> String {
     }
     encoded
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn encode_segment_escapes_reserved_characters() {
+        assert_eq!(encode_segment("a/b c"), "a%2Fb%20c");
+    }
+
+    #[test]
+    fn encode_segment_keeps_unreserved_characters() {
+        assert_eq!(encode_segment("abc-_.~"), "abc-_.~");
+    }
+
+    #[test]
+    fn error_message_prefers_the_error_field() {
+        assert_eq!(
+            error_message(r#"{"error":"bad","message":"worse"}"#),
+            "bad"
+        );
+    }
+
+    #[test]
+    fn error_message_falls_back_to_the_message_field() {
+        assert_eq!(error_message(r#"{"message":"worse"}"#), "worse");
+    }
+
+    #[test]
+    fn error_message_falls_back_to_the_raw_body() {
+        assert_eq!(error_message("  plain failure  "), "plain failure");
+    }
+
+    #[test]
+    fn client_uses_the_default_base_url_for_blank_input() {
+        let client = Client::new("   ");
+        assert_eq!(client.base_url(), DEFAULT_BASE_URL);
+    }
+
+    #[test]
+    fn client_trims_trailing_slashes() {
+        let client = Client::new("http://example.com///");
+        assert_eq!(client.base_url(), "http://example.com");
+    }
+
+    #[test]
+    fn api_error_display_with_and_without_a_message() {
+        let with_message = ApiError {
+            status_code: 400,
+            message: "bad request".to_string(),
+        };
+        assert_eq!(
+            with_message.to_string(),
+            "scalarflow: request failed with status 400: bad request"
+        );
+
+        let without_message = ApiError {
+            status_code: 404,
+            message: String::new(),
+        };
+        assert_eq!(
+            without_message.to_string(),
+            "scalarflow: request failed with status 404"
+        );
+    }
+
+    #[test]
+    fn error_display_variants() {
+        assert_eq!(
+            Error::Transport("boom".to_string()).to_string(),
+            "scalarflow: send request: boom"
+        );
+        assert_eq!(
+            Error::Encode("boom".to_string()).to_string(),
+            "scalarflow: encode request: boom"
+        );
+        assert_eq!(
+            Error::Decode("boom".to_string()).to_string(),
+            "scalarflow: decode response: boom"
+        );
+
+        let err = Error::Api(ApiError {
+            status_code: 500,
+            message: "oops".to_string(),
+        });
+        assert_eq!(
+            err.to_string(),
+            "scalarflow: request failed with status 500: oops"
+        );
+        assert!(std::error::Error::source(&err).is_some());
+    }
+}
