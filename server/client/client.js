@@ -67,7 +67,10 @@ class Client {
     }
 
     try {
-      const response = await this.fetch(this.baseURL + path, init);
+      // Call fetch as a standalone function so browser implementations, which
+      // require `this` to be the global object, are not invoked illegally.
+      const fetchImpl = this.fetch;
+      const response = await fetchImpl(this.baseURL + path, init);
       const text = await response.text();
 
       let data = null;
