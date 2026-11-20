@@ -1,0 +1,31 @@
+{
+  "name": "scalarflow",
+  "version": "0.1.0",
+  "description": "JavaScript client for ScalarFlow: a from-scratch scalar autograd engine and neural network library.",
+  "type": "module",
+  "main": "./index.js",
+  "module": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "engine.js",
+    "nn.js",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "autograd",
+    "neural-network",
+    "scalarflow",
+    "machine-learning"
+  ],
+  "license": "MIT"
+}

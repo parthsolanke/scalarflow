@@ -67,3 +67,32 @@ model.fit(inputs, outputs, epochs=100)
 predictions = model.predict(inputs)
 print(predictions)
 ```
+
+## JavaScript Client
+
+A JavaScript (ESM) client that mirrors the Python engine and neural network API is
+available in [`js-client/`](js-client/README.md).
+
+```bash
+npm install ./js-client
+```
+
+```js
+import { value, network } from 'scalarflow';
+
+const a = new value(2);
+const b = new value(3);
+const d = a.mul(b);
+d.backward();
+
+console.log(d.toString());  // value(data = 6, grad = 1)
+console.log(a.gradient);    // 3
+
+const model = new network(2, [4, 2, 1], 'relu');
+model.fit([[0, 0], [0, 1], [1, 0], [1, 1]], [[0], [1], [1], [0]], 100);
+console.log(model.predict([[0, 0], [1, 1]]));
+```
+
+See [`js-client/README.md`](js-client/README.md) for the full API, including
+`value` operations, activations, `neuron`, `layer`, `network`, losses and graph
+tracing.
