@@ -36,6 +36,35 @@ func main() {
 }
 ```
 
+## Ping/pong connectivity
+ScalarFlow can talk to the Namergence service over HTTP. ScalarFlow serves a `pong` endpoint and its Go client can call a peer's `ping` endpoint, so the two projects can confirm they are reachable from each other.
+
+Run the ScalarFlow pong server:
+
+```bash
+cd scalarflow-go
+go run ./cmd/pong
+```
+
+It listens on `http://127.0.0.1:8001` and answers `GET /pong` with:
+
+```json
+{"message": "pong", "service": "scalarflow"}
+```
+
+Check that the Namergence server (whose `GET /ping` answers `{"message": "pong", "service": "namergence"}`) is reachable:
+
+```go
+client := scalarflow.NewPingClient("http://127.0.0.1:8000")
+pong, err := client.Ping(context.Background())
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(pong.Service, pong.Message)
+```
+
+`NewPongServer` and `PongHandler` can also be mounted in your own Go HTTP server instead of running `cmd/pong`. Run the connectivity tests with `cd scalarflow-go && go test ./...`.
+
 ## Dependencies
 The neural network library has the following dependencies:
 
