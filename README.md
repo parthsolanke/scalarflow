@@ -13,7 +13,7 @@ This project is a simple neural network library implemented from scratch in Pyth
 - Visualizations of computation graphs using Graphviz.
 
 ## Go client
-A native Go port of the library lives in `scalarflow-go/`. It mirrors the Python API using methods instead of operator overloading (`Add`, `Sub`, `Mul`, `Div`, `Pow`, `Exp`, `Tanh`, `Relu`, `Sigmoid`) and provides the same `Neuron`, `Layer` and `Network` types, ready for use as a Go module.
+A native Go port of the library lives in `scalarflow-go/` (module `scalarflow`, standard library only, Go >= 1.20). It mirrors the Python API using methods instead of operator overloading: `Add`, `Sub`, `Mul`, `Div`, `Pow`, `Exp`, `Tanh`, `Relu` and `Sigmoid` on `Value`, plus the `Neuron`, `Layer` and `Network` types with `NewNetwork`, `Summary`, `Fit` and `Predict` (and the `SVMLoss`/`MSELoss` helpers).
 
 ```go
 package main
@@ -36,8 +36,15 @@ func main() {
 }
 ```
 
+Run the Go tests with:
+
+```bash
+cd scalarflow-go
+go test ./...
+```
+
 ## Ping/pong connectivity
-ScalarFlow can talk to the Namergence service over HTTP. ScalarFlow serves a `pong` endpoint and its Go client can call a peer's `ping` endpoint, so the two projects can confirm they are reachable from each other.
+ScalarFlow can talk to the Namergence service over HTTP. ScalarFlow serves a `/pong` endpoint and its Go client can call a peer's `/ping` endpoint, so the two projects can confirm they are reachable from each other.
 
 Run the ScalarFlow pong server:
 
@@ -52,7 +59,7 @@ It listens on `http://127.0.0.1:8001` and answers `GET /pong` with:
 {"message": "pong", "service": "scalarflow"}
 ```
 
-Check that the Namergence server (whose `GET /ping` answers `{"message": "pong", "service": "namergence"}`) is reachable:
+Check that the Namergence server (whose `GET /ping` at `http://127.0.0.1:8000` answers `{"message": "pong", "service": "namergence"}`) is reachable:
 
 ```go
 client := scalarflow.NewPingClient("http://127.0.0.1:8000")
@@ -63,7 +70,7 @@ if err != nil {
 fmt.Println(pong.Service, pong.Message)
 ```
 
-`NewPongServer` and `PongHandler` can also be mounted in your own Go HTTP server instead of running `cmd/pong`. Run the connectivity tests with `cd scalarflow-go && go test ./...`.
+The connectivity API is `NewPingClient`/`Ping` on the client side and `NewPongServer`/`PongHandler` (with the `Pong` handler) on the server side. `NewPongServer("")` and `NewPingClient("")` fall back to the defaults `127.0.0.1:8001` and `http://127.0.0.1:8000`. `NewPongServer` and `PongHandler` can also be mounted in your own Go HTTP server instead of running `cmd/pong`.
 
 ## Dependencies
 The neural network library has the following dependencies:
