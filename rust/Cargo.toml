@@ -1,0 +1,15 @@
+[package]
+name = "scalarflow"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "scalarflow"
+path = "src/lib.rs"
+
+[[bin]]
+name = "scalarflow-demo"
+path = "src/main.rs"
+
+[dependencies]
+rand = "0.8"
