@@ -12,11 +12,36 @@ This project is a simple neural network library implemented from scratch in Pyth
 - Training loop using gradient descent optimization algorithm.
 - Visualizations of computation graphs using Graphviz.
 
+## Go client
+A native Go port of the library lives in `scalarflow-go/`. It mirrors the Python API using methods instead of operator overloading (`Add`, `Sub`, `Mul`, `Div`, `Pow`, `Exp`, `Tanh`, `Relu`, `Sigmoid`) and provides the same `Neuron`, `Layer` and `Network` types, ready for use as a Go module.
+
+```go
+package main
+
+import (
+	"fmt"
+
+	scalarflow "scalarflow"
+)
+
+func main() {
+	model := scalarflow.NewNetwork(2, []int{4, 2, 1}, "relu")
+	model.Summary()
+
+	inputs := [][]float64{{0, 0}, {0, 1}, {1, 0}, {1, 1}}
+	outputs := []float64{0, 1, 1, 0}
+
+	model.Fit(inputs, outputs, 100)
+	fmt.Println(model.Predict(inputs))
+}
+```
+
 ## Dependencies
 The neural network library has the following dependencies:
 
 - Python (>=3.6)
 - Graphviz (for visualization)
+- Go (>=1.20) for the Go client in `scalarflow-go/`
 
 ## Usage
 
