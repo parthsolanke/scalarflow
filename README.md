@@ -18,6 +18,17 @@ The neural network library has the following dependencies:
 - Python (>=3.6)
 - Graphviz (for visualization)
 
+## Rust rewrite
+
+A native Rust port lives in `rust/`. It reimplements the autograd engine (`engine.rs`) and the neural network building blocks (`nn.rs`) with the same operators, activations, losses and gradient-descent training loop; the Python package is left untouched.
+
+```bash
+cd rust
+cargo run --bin scalarflow-demo   # autograd example + XOR training
+```
+
+`Value` is reference-counted so the computation graph can be shared, and `Value::draw_graph` returns Graphviz DOT source instead of requiring the Python `graphviz` package.
+
 ## Usage
 
 - Import the necessary modules and classes.
