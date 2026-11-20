@@ -96,3 +96,34 @@ console.log(model.predict([[0, 0], [1, 1]]));
 See [`js-client/README.md`](js-client/README.md) for the full API, including
 `value` operations, activations, `neuron`, `layer`, `network`, losses and graph
 tracing.
+
+## Go Client
+
+A Go client that mirrors the Python engine and neural network API is available in
+[`go-client/`](go-client/README.md).
+
+```go
+import scalarflow "scalarflow"
+
+a := scalarflow.NewValue(2)
+b := scalarflow.NewValue(3)
+d := a.Mul(b)
+d.Backward()
+
+fmt.Println(d)           // value(data = 6, grad = 1)
+fmt.Println(a.Gradient)  // 3
+
+model := scalarflow.NewNetwork(2, []int{4, 2, 1}, scalarflow.ActivationRelu)
+
+inputs := [][]scalarflow.Scalar{
+    {0.0, 0.0}, {0.0, 1.0}, {1.0, 0.0}, {1.0, 1.0},
+}
+outputs := []scalarflow.Scalar{0.0, 1.0, 1.0, 0.0}
+
+model.Fit(inputs, outputs, 100)
+fmt.Println(model.Predict(inputs))
+```
+
+See [`go-client/README.md`](go-client/README.md) for the full API, including
+`Value` operations, activations, `Neuron`, `Layer`, `Network`, losses and graph
+tracing.
