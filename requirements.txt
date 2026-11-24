@@ -1,0 +1,7 @@
+numpy
+graphviz
+fastapi
+uvicorn
+
+pytest
+httpx
