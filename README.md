@@ -16,6 +16,9 @@ forward and backward passes work.
 - Gradient-descent training via `network.fit` and inference via
   `network.predict`
 - Computation-graph visualisation with Graphviz via `value.draw_graph()`
+- A dependency-free JSON HTTP server (`python -m scalarflow.server`) exposing
+  `/health`, `/model`, `/train` and `/predict`
+- A Rust command-line client in `rust-client/` that drives the HTTP server
 
 ## Dependencies
 
@@ -136,4 +139,8 @@ the full command list.
   endpoints over JSON
 - `rust-client/` — Rust command-line client for the HTTP server
 - `scalarflow/__init__.py` — re-exports the `engine` and `nn` modules
+- `building_scalarflow.ipynb` — step-by-step notebook that builds the autograd
+  engine and network from scratch, with plots and graph renders
 - `testing_sclarflow.ipynb` — notebook used to sanity-test the library
+- `vizorg.png` — example computation-graph image produced while building the
+  library
