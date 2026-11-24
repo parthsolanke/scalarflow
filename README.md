@@ -1,56 +1,26 @@
 # ScalarFlow
 
-![Computation graph visualisation](vizorg.png)
-
-ScalarFlow is a small neural network library implemented from scratch in Python. It pairs a custom reverse-mode autograd engine with a minimal set of neural network building blocks, and can render computation graphs with Graphviz so you can inspect values and gradients.
-
-The goal is clarity rather than speed: everything is built on a single scalar `value` type, which makes the mechanics of backpropagation easy to follow.
+ScalarFlow is a small neural network library implemented from scratch in Python. It provides a custom auto-gradient (`autograd`) engine and a set of neural network building blocks, so you can build and train networks without a deep learning framework.
 
 ## Features
 
-- A scalar autograd engine (`value`) with operator overloading and reverse-mode differentiation.
-- Arithmetic operations: addition, subtraction, multiplication, division, powers and `exp`.
-- Activation functions: `tanh`, `relu` and `sigmoid`.
-- Building blocks: `neuron`, `layer` and `network`.
-- Losses: mean squared error (`mse_loss`) and an SVM max-margin loss (`svm_loss`).
-- A training loop (`network.fit`) using gradient descent with a decaying learning rate.
-- Computation-graph visualisation via Graphviz (`value.draw_graph`).
-
-## Project structure
-
-```
-scalarflow/engine.py   # The `value` autograd primitive
-scalarflow/nn.py       # neuron, layer, network, losses and training
-scalarflow/__init__.py # Re-exports the engine and nn submodules
-building_scalarflow.ipynb  # Step-by-step build-up of the library
-testing_sclarflow.ipynb    # Sanity tests and training demo
-README.md
-```
+- A `value` class in `scalarflow/engine.py` that wraps a scalar, overloads arithmetic operators, and records the computation graph used for automatic differentiation.
+- Backpropagation via a topological sort of the graph (`value.backward()`).
+- Activation functions on `value`: `sigmoid`, `tanh` and `relu`, plus `exp` and power operations.
+- Neural network building blocks in `scalarflow/nn.py`: `module`, `neuron`, `layer` and `network`.
+- Loss functions: an SVM (max-margin) loss and an MSE loss.
+- Training via gradient descent with `network.fit(...)`, plus `network.predict(...)` and `network.summary()`.
+- Optional computation-graph visualization with Graphviz via `value.draw_graph()`.
 
 ## Dependencies
 
-- Python (>= 3.6)
-- `graphviz` (the Python package) and the Graphviz system binaries, for visualisation
-- `numpy`, used by the SVM loss for batch sampling
-
-On many systems the Graphviz binaries are installed separately from the Python package, for example:
-
-```bash
-# Debian/Ubuntu
-sudo apt-get install graphviz
-# macOS
-brew install graphviz
-```
-
-Then install the Python dependencies:
-
-```bash
-pip install graphviz numpy
-```
-
-There is no packaging metadata, so run examples from the repository root (where the `scalarflow` package lives) or add that directory to `PYTHONPATH`.
+- Python (>=3.6)
+- `numpy`
+- Graphviz (Python package and system binary, needed for graph visualization)
 
 ## Usage
+
+Import the engine and network components as needed.
 
 ### Autograd engine
 
@@ -65,17 +35,16 @@ d = a * b
 
 d.backward()
 
-print("c =", c)  # c = value(data = 5, grad = 1)
-print("d =", d)  # d = value(data = 6, grad = 2)
+print("c =", c)  # value(data = 5, grad = 0)
+print("d =", d)  # value(data = 6, grad = 1)
 ```
 
-`backward()` performs a topological sort over the graph and applies the chain rule in reverse order, accumulating gradients on each node.
-
-### Neural networks
+### Neural network library
 
 ```python
 from scalarflow.nn import network
 
+# num_in = number of inputs, layer_sizes = units per layer
 model = network(num_in=2, layer_sizes=[4, 2, 1], unit_activation='relu')
 model.summary()
 
@@ -88,25 +57,25 @@ predictions = model.predict(inputs)
 print(predictions)
 ```
 
-`unit_activation` accepts `'sigmoid'`, `'tanh'` or `'relu'`; if omitted or unrecognised, units fall back to `tanh`.
+`unit_activation` may be `'sigmoid'`, `'tanh'` or `'relu'`; when omitted, neurons default to `tanh`.
 
-### API overview
+### Visualizing the graph
 
-- `value(data, label='')` — scalar node; exposes `.data`, `.gradient`, `.label` and `.backward()`.
-- `value.draw_graph()` — returns a Graphviz `Digraph` of the node's computation graph, annotated with data and gradients. Call `.render()` or display it in a notebook.
-- `neuron(num_in, _activation='')` — a single unit with weights and a bias.
-- `layer(num_in, num_out, _activation='')` — a dense layer of neurons.
-- `network(num_in, layer_sizes, unit_activation='')` — a stack of layers; supports `parameters()`, `zero_grad()`, `summary()`, `mse_loss()`, `svm_loss()`, `fit()` and `predict()`.
+```python
+from scalarflow.engine import value
 
-### Losses and training
+x = value(2, label='x')
+y = value(3, label='y')
+z = x * y + x
+z.backward()
+z.draw_graph()  # returns a Graphviz Digraph
+```
 
-- `model.mse_loss(x, y)` returns the mean squared error plus a small L2 regularisation term.
-- `model.svm_loss(x, y, batch_size=None)` computes a max-margin loss with L2 regularisation and also returns accuracy. Passing `batch_size` samples that many rows per call.
-- `model.fit(x, y, epochs)` minimises the MSE loss with gradient descent, shrinking the step size over time, and logs the loss every 10 epochs.
+## Project structure
 
-Because the engine is scalar-based, these implementations are intended for small datasets and learning purposes.
-
-## Notebooks
-
-- `building_scalarflow.ipynb` develops the engine and network pieces incrementally.
-- `testing_sclarflow.ipynb` exercises the library on a tiny dataset, trains a model and plots results.
+```
+scalarflow/__init__.py  # exposes the engine and nn modules
+scalarflow/engine.py    # autograd value class and graph visualization
+scalarflow/nn.py        # module, neuron, layer, network and losses
+testing_sclarflow.ipynb # example notebook: data, training and plots
+```
