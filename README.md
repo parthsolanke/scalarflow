@@ -83,32 +83,66 @@ graph.render('graph', cleanup=True)  # writes graph.svg (requires Graphviz)
 
 ### HTTP server
 
-ScalarFlow ships a small JSON HTTP server built on the Python standard library,
-so no extra dependency is needed.
+ScalarFlow ships a small JSON HTTP server built on the Python standard library
+(`ThreadingHTTPServer`), so no extra dependency is needed.
 
 ```bash
 python -m scalarflow.server --host 127.0.0.1 --port 8000 \
   --num-in 2 --layer-sizes 4 2 1 --activation tanh
 ```
 
-The server keeps one in-memory network. Endpoints:
+CLI options and defaults:
 
-- `GET /health` — server status and current model configuration
+| Option | Default | Notes |
+| --- | --- | --- |
+| `--host` | `127.0.0.1` | Interface to bind |
+| `--port` | `8000` | TCP port |
+| `--num-in` | `2` | Number of input features |
+| `--layer-sizes` | `4 2 1` | Hidden and output layer sizes |
+| `--activation` | `tanh` | One of `""`, `sigmoid`, `tanh`, `relu` (`""` falls back to tanh) |
+
+The server keeps one in-memory network protected by a lock and logs each
+request to stdout. All responses are JSON. Endpoints:
+
+- `GET /health` — server status and current model configuration:
+  `{"status": "ok", "model": {"num_in": 2, "layer_sizes": [4, 2, 1],
+  "activation": "tanh", "parameters": 25}}`
 - `POST /model` — replace the network with
-  `{"num_in": 2, "layer_sizes": [4, 2, 1], "activation": "tanh"}`
+  `{"num_in": 2, "layer_sizes": [4, 2, 1], "activation": "tanh"}`. Every field
+  is optional and falls back to the current value; the response echoes the new
+  `model` info.
 - `POST /train` — train on
   `{"inputs": [[0, 0], [1, 1]], "outputs": [0, 1], "epochs": 100}` and return
-  the final MSE loss plus predictions
-- `POST /predict` — run a forward pass on
-  `{"inputs": [[0, 0], [1, 0]]}`
+  `epochs`, the final `loss` (MSE), `predictions` and the `model` info.
+- `POST /predict` — run a forward pass on `{"inputs": [[0, 0], [1, 0]]}` and
+  return `{"predictions": [...]}`.
 
-Training requires the final layer size to be `1`. Example:
+Request validation rules:
+
+- The body must be a JSON object; `inputs` must be a non-empty list of numeric
+  rows, and `outputs` a list of numbers of the same length.
+- Each `inputs` row must contain exactly `num_in` values.
+- `epochs` is an integer `>= 1` and at most `1000000`; it defaults to `100`.
+- `num_in` and each entry in `layer_sizes` must be integers `>= 1`.
+- Training (and setting a model) requires the final layer size to be `1`.
+
+Errors are returned as `{"error": "bad_request", "message": "..."}` with status
+`400`, `{"error": "not_found", "path": "..."}` with status `404` for unknown
+paths, and `{"error": "internal_error", "message": "..."}` with status `500` for
+unexpected failures while keeping the server alive. Example:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/train \
   -H 'Content-Type: application/json' \
   -d '{"inputs": [[0, 0], [0, 1], [1, 0], [1, 1]],
        "outputs": [0, 1, 1, 0], "epochs": 100}'
+```
+
+```bash
+curl http://127.0.0.1:8000/health
+curl -X POST http://127.0.0.1:8000/model \
+  -H 'Content-Type: application/json' \
+  -d '{"activation": "relu"}'
 ```
 
 ### Rust client
