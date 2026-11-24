@@ -17,6 +17,13 @@ ScalarFlow is a small neural network library implemented from scratch in Python.
 - Python (>=3.6)
 - `numpy`
 - Graphviz (Python package and system binary, needed for graph visualization)
+- `fastapi` and `uvicorn` (needed to run the HTTP server)
+
+Install them with:
+
+```bash
+pip install -r requirements.txt
+```
 
 ## Usage
 
@@ -71,11 +78,31 @@ z.backward()
 z.draw_graph()  # returns a Graphviz Digraph
 ```
 
+### Running the FastAPI server
+
+`scalarflow/server.py` exposes a network over HTTP. The model is configured with
+environment variables: `SCALARFLOW_NUM_IN` (default `2`),
+`SCALARFLOW_LAYER_SIZES` (default `4,2,1`) and `SCALARFLOW_ACTIVATION` (default
+`''`, which falls back to `tanh`).
+
+```bash
+uvicorn scalarflow.server:app --reload
+```
+
+Endpoints:
+
+- `GET /health` — liveness check.
+- `GET /summary` — architecture summary of the loaded network.
+- `POST /predict` — body `{"inputs": [[0, 0], [1, 1]]}`, returns `predictions`.
+- `POST /train` — body `{"inputs": [[0, 0]], "outputs": [0], "epochs": 100}`, trains in place and returns the training log.
+
 ## Project structure
 
 ```
 scalarflow/__init__.py  # exposes the engine and nn modules
 scalarflow/engine.py    # autograd value class and graph visualization
 scalarflow/nn.py        # module, neuron, layer, network and losses
+scalarflow/server.py    # FastAPI server exposing the network over HTTP
+requirements.txt        # runtime and server dependencies
 testing_sclarflow.ipynb # example notebook: data, training and plots
 ```
