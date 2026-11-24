@@ -78,10 +78,42 @@ graph = z.draw_graph()
 graph.render('graph', cleanup=True)  # writes graph.svg (requires Graphviz)
 ```
 
+### HTTP server
+
+ScalarFlow ships a small JSON HTTP server built on the Python standard library,
+so no extra dependency is needed.
+
+```bash
+python -m scalarflow.server --host 127.0.0.1 --port 8000 \
+  --num-in 2 --layer-sizes 4 2 1 --activation tanh
+```
+
+The server keeps one in-memory network. Endpoints:
+
+- `GET /health` — server status and current model configuration
+- `POST /model` — replace the network with
+  `{"num_in": 2, "layer_sizes": [4, 2, 1], "activation": "tanh"}`
+- `POST /train` — train on
+  `{"inputs": [[0, 0], [1, 1]], "outputs": [0, 1], "epochs": 100}` and return
+  the final MSE loss plus predictions
+- `POST /predict` — run a forward pass on
+  `{"inputs": [[0, 0], [1, 0]]}`
+
+Training requires the final layer size to be `1`. Example:
+
+```bash
+curl -X POST http://127.0.0.1:8000/train \
+  -H 'Content-Type: application/json' \
+  -d '{"inputs": [[0, 0], [0, 1], [1, 0], [1, 1]],
+       "outputs": [0, 1, 1, 0], "epochs": 100}'
+```
+
 ## Package layout
 
 - `scalarflow/engine.py` — the `value` autograd type, backpropagation and graph
   tracing
 - `scalarflow/nn.py` — `module`, `neuron`, `layer` and `network`
+- `scalarflow/server.py` — standard-library HTTP server exposing predict/train
+  endpoints over JSON
 - `scalarflow/__init__.py` — re-exports the `engine` and `nn` modules
 - `testing_sclarflow.ipynb` — notebook used to sanity-test the library
