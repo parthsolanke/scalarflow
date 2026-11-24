@@ -108,6 +108,25 @@ curl -X POST http://127.0.0.1:8000/train \
        "outputs": [0, 1, 1, 0], "epochs": 100}'
 ```
 
+### Rust client
+
+A small Rust command-line client for the same HTTP API lives in
+[`rust-client/`](rust-client). It has no Python dependency and prints each JSON
+response pretty-printed.
+
+```bash
+cd rust-client
+cargo run -- health
+cargo run -- train \
+  --inputs '[[0,0],[0,1],[1,0],[1,1]]' \
+  --outputs '[0,1,1,0]' --epochs 100
+cargo run -- predict --inputs '[[0,0],[1,0]]'
+```
+
+The client defaults to `http://127.0.0.1:8000`; pass `--url` or set
+`SCALARFLOW_URL` to point it at another host. See `rust-client/README.md` for
+the full command list.
+
 ## Package layout
 
 - `scalarflow/engine.py` — the `value` autograd type, backpropagation and graph
@@ -115,5 +134,6 @@ curl -X POST http://127.0.0.1:8000/train \
 - `scalarflow/nn.py` — `module`, `neuron`, `layer` and `network`
 - `scalarflow/server.py` — standard-library HTTP server exposing predict/train
   endpoints over JSON
+- `rust-client/` — Rust command-line client for the HTTP server
 - `scalarflow/__init__.py` — re-exports the `engine` and `nn` modules
 - `testing_sclarflow.ipynb` — notebook used to sanity-test the library
