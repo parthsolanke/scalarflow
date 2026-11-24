@@ -2,68 +2,84 @@
 
 ![nn_vizorg](vizorg.png)
 
-This project is a simple neural network library implemented from scratch in Python. It provides a framework for building and training neural networks using a custom auto-gradient engine. The library includes classes for defining neural network layers, neurons, network mode and for visualization of networks and their gradients. Supports common activation functions like sigmoid, tanh, and relu.
+ScalarFlow is a small neural network library implemented from scratch in Python. It is built on a custom scalar autograd engine and provides the building blocks for defining, training, and visualizing neural networks. It supports the sigmoid, tanh, and relu activation functions.
 
 ## Features
 
-- Implementation of a custom auto-gradient engine for automatic differentiation.
-- Definition of neural network layers with customizable activation functions.
-- Support for common activation functions: sigmoid, tanh, and relu.
-- Training loop using gradient descent optimization algorithm.
-- Visualizations of computation graphs using Graphviz.
+- Custom automatic differentiation engine (`scalarflow.engine.value`) with operator overloading and reverse-mode backpropagation.
+- Neural network building blocks: `neuron`, `layer`, and `network` (`scalarflow.nn`).
+- Built-in activation functions: sigmoid, tanh, and relu.
+- Loss functions: SVM-style hinge loss and mean squared error.
+- Simple training loop using gradient descent.
+- Computation graph visualization with Graphviz.
+
+## Project structure
+
+```
+scalarflow/
+  __init__.py     Exposes the engine and nn submodules
+  engine.py       Autograd value class, activations, backprop, graph drawing
+  nn.py           neuron, layer, network, losses, and training helpers
+testing_sclarflow.ipynb   Notebook used to try out the library
+```
 
 ## Dependencies
-The neural network library has the following dependencies:
 
 - Python (>=3.6)
-- Graphviz (for visualization)
+- numpy
+- Graphviz (the Python package and the system Graphviz binary, for visualization)
 
 ## Usage
 
-- Import the necessary modules and classes.
-- Define your mathematical expressions using the value class from the autograd engine.
-- Create your neural network model by composing layers and neurons from the neural network library.
-- Train your neural network using the provided methods for different loss functions.
+### Autograd engine
 
-Autograd Engine
 ```python
-# Example usage of the autograd engine
 from scalarflow.engine import value
 
-# Create value objects
 a = value(2)
 b = value(3)
 
-# Perform arithmetic operations
 c = a + b
 d = a * b
 
-# Compute gradients
 d.backward()
 
-# Print results
-print("c =", c)  # Output: c = value(data = 5, grad = 1)
-print("d =", d)  # Output: d = value(data = 6, grad = 2)
+print("c =", c)  # value(data = 5, grad = 1)
+print("d =", d)  # value(data = 6, grad = 2)
 ```
 
-Neural Network Library
+### Neural network
+
 ```python
-# Example usage of the neural network library
 from scalarflow.nn import network
 
-# Create a neural network model
+# num_in = number of inputs, layer_sizes = units per layer
 model = network(num_in=2, layer_sizes=[4, 2, 1], unit_activation='relu')
-
-# Print the network architecture summary
 model.summary()
 
-# Train the model
 inputs = [[0, 0], [0, 1], [1, 0], [1, 1]]
 outputs = [[0], [1], [1], [0]]
 
 model.fit(inputs, outputs, epochs=100)
 
-# Make predictions
 predictions = model.predict(inputs)
 print(predictions)
 ```
+
+### Visualizing a computation graph
+
+```python
+from scalarflow.engine import value
+
+a = value(2, label='a')
+b = value(3, label='b')
+c = a * b + a
+c.backward()
+c.draw_graph().render('graph', view=False)
+```
+
+## Notes
+
+- Activations are selected per neuron and passed down through layers via the `unit_activation` argument of `network` (defaults to tanh when no activation is given).
+- `network.fit` currently optimizes with `mse_loss`; use `svm_loss` directly for a max-margin objective.
+- The `testing_sclarflow.ipynb` notebook walks through generating data, building a network, training, and visualizing results.
