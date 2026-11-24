@@ -1,4 +1,4 @@
-# ScalarFlow
+# ScalarFlow — A Neural Network Library from Scratch
 
 ![nn_vizorg](vizorg.png)
 
