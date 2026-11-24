@@ -130,6 +130,24 @@ The client defaults to `http://127.0.0.1:8000`; pass `--url` or set
 `SCALARFLOW_URL` to point it at another host. See `rust-client/README.md` for
 the full command list.
 
+## Tests
+
+The Python test suite uses the standard-library `unittest` runner and covers the
+autograd engine, the network building blocks and the HTTP endpoints. Run it from
+the repository root:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+The Rust client has unit tests for its argument parsing and request-body
+building. Run them from `rust-client/`:
+
+```bash
+cd rust-client
+cargo test
+```
+
 ## Package layout
 
 - `scalarflow/engine.py` — the `value` autograd type, backpropagation and graph

@@ -202,3 +202,89 @@ fn request(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn args(items: &[&str]) -> Vec<String> {
+        items.iter().map(|item| item.to_string()).collect()
+    }
+
+    fn flags(pairs: &[(&str, &str)]) -> HashMap<String, String> {
+        pairs
+            .iter()
+            .map(|(key, value)| (key.to_string(), value.to_string()))
+            .collect()
+    }
+
+    #[test]
+    fn parse_args_collects_positionals_and_flags() {
+        let (positional, parsed) =
+            parse_args(&args(&["train", "--inputs", "[[0]]", "--epochs=5"])).unwrap();
+
+        assert_eq!(positional, vec!["train".to_string()]);
+        assert_eq!(parsed.get("inputs").map(String::as_str), Some("[[0]]"));
+        assert_eq!(parsed.get("epochs").map(String::as_str), Some("5"));
+    }
+
+    #[test]
+    fn parse_args_requires_flag_value() {
+        assert!(parse_args(&args(&["--url"])).is_err());
+    }
+
+    #[test]
+    fn parse_layer_sizes_splits_and_trims() {
+        assert_eq!(parse_layer_sizes("4, 2,1").unwrap(), vec![4, 2, 1]);
+    }
+
+    #[test]
+    fn parse_layer_sizes_rejects_non_integer() {
+        assert!(parse_layer_sizes("4,x").is_err());
+    }
+
+    #[test]
+    fn required_json_parses_value() {
+        let parsed = required_json(&flags(&[("inputs", "[[0,1]]")]), "inputs").unwrap();
+
+        assert_eq!(parsed, serde_json::json!([[0, 1]]));
+    }
+
+    #[test]
+    fn required_json_rejects_invalid_json() {
+        assert!(required_json(&flags(&[("inputs", "nope")]), "inputs").is_err());
+    }
+
+    #[test]
+    fn model_body_includes_given_fields() {
+        let body = model_body(&flags(&[
+            ("num-in", "3"),
+            ("layer-sizes", "4,2,1"),
+            ("activation", "relu"),
+        ]))
+        .unwrap();
+
+        assert_eq!(body.get("num_in"), Some(&serde_json::json!(3)));
+        assert_eq!(body.get("layer_sizes"), Some(&serde_json::json!([4, 2, 1])));
+        assert_eq!(body.get("activation"), Some(&serde_json::json!("relu")));
+    }
+
+    #[test]
+    fn train_body_requires_inputs_and_outputs() {
+        assert!(train_body(&flags(&[("inputs", "[[0]]")])).is_err());
+    }
+
+    #[test]
+    fn train_body_includes_epochs() {
+        let body = train_body(&flags(&[
+            ("inputs", "[[0]]"),
+            ("outputs", "[1]"),
+            ("epochs", "10"),
+        ]))
+        .unwrap();
+
+        assert_eq!(body["inputs"], serde_json::json!([[0]]));
+        assert_eq!(body["outputs"], serde_json::json!([1]));
+        assert_eq!(body["epochs"], serde_json::json!(10));
+    }
+}
