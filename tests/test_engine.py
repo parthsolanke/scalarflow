@@ -129,6 +129,110 @@ class ActivationTests(unittest.TestCase):
         self.assertAlmostEqual(x.gradient, 0.25)
 
 
+class SubtractionGradientTests(unittest.TestCase):
+
+    def test_subtraction_gradients(self):
+        a, b = value(5), value(2)
+        c = a - b
+        c.backward()
+
+        self.assertEqual(c.data, 3)
+        self.assertEqual(a.gradient, 1)
+        self.assertEqual(b.gradient, -1)
+
+    def test_reverse_subtraction_gradient(self):
+        b = value(2)
+        c = 5 - b
+        c.backward()
+
+        self.assertEqual(c.data, 3)
+        self.assertEqual(b.gradient, -1)
+
+
+class ReverseDivisionTests(unittest.TestCase):
+
+    def test_reverse_division_gradient(self):
+        b = value(2)
+        c = 6 / b
+        c.backward()
+
+        self.assertEqual(c.data, 3)
+        self.assertAlmostEqual(b.gradient, -1.5)
+
+
+class PowerTests(unittest.TestCase):
+
+    def test_negative_exponent_gradient(self):
+        x = value(2)
+        y = x ** -1
+        y.backward()
+
+        self.assertAlmostEqual(y.data, 0.5)
+        self.assertAlmostEqual(x.gradient, -0.25)
+
+    def test_unsupported_power_raises(self):
+        with self.assertRaises(AssertionError):
+            value(2) ** value(3)
+
+
+class ExpTests(unittest.TestCase):
+
+    def test_exp_forward_and_gradient(self):
+        x = value(1)
+        y = x.exp()
+        y.backward()
+
+        self.assertAlmostEqual(y.data, math.e)
+        self.assertAlmostEqual(x.gradient, math.e)
+
+    def test_exp_chain_rule(self):
+        x = value(0)
+        y = (x.exp() * 2) + 1
+        y.backward()
+
+        self.assertAlmostEqual(y.data, 3)
+        self.assertAlmostEqual(x.gradient, 2)
+
+
+class ActivationEdgeTests(unittest.TestCase):
+
+    def test_relu_at_zero_has_zero_gradient(self):
+        x = value(0)
+        y = x.relu()
+        y.backward()
+
+        self.assertEqual(y.data, 0)
+        self.assertEqual(x.gradient, 0)
+
+    def test_tanh_gradient_at_one(self):
+        x = value(1)
+        y = x.tanh()
+        y.backward()
+
+        self.assertAlmostEqual(x.gradient, 1 - math.tanh(1) ** 2)
+
+    def test_sigmoid_gradient_at_one(self):
+        x = value(1)
+        y = x.sigmoid()
+        y.backward()
+
+        s = 1 / (1 + math.exp(-1))
+        self.assertAlmostEqual(x.gradient, s * (1 - s))
+
+
+class TraceTests(unittest.TestCase):
+
+    def test_trace_collects_nodes_and_edges(self):
+        a = value(1, label='a')
+        b = value(2, label='b')
+        c = a * b
+
+        nodes, edges = c._trace()
+
+        self.assertEqual(nodes, {a, b, c})
+        self.assertEqual(edges, {(a, c), (b, c)})
+
+
 class RepresentationTests(unittest.TestCase):
 
     def test_repr(self):

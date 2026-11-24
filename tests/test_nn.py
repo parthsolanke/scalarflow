@@ -1,7 +1,12 @@
+import contextlib
+import io
+import math
 import unittest
 
+import numpy as np
+
 from scalarflow.engine import value
-from scalarflow.nn import layer, network, neuron
+from scalarflow.nn import layer, module, network, neuron
 
 
 class NeuronTests(unittest.TestCase):
@@ -90,6 +95,103 @@ class NetworkTests(unittest.TestCase):
         after = [p.data for p in model.parameters()]
 
         self.assertNotEqual(before, after)
+
+
+class ModuleTests(unittest.TestCase):
+
+    def test_base_module_has_no_parameters(self):
+        base = module()
+        self.assertEqual(base.parameters(), [])
+        base.zero_grad()  # must not raise
+
+
+class NeuronActivationTests(unittest.TestCase):
+
+    def _unit(self, weights, bias, activation=''):
+        unit = neuron(len(weights), activation)
+        unit.weights = [value(w) for w in weights]
+        unit.bias = value(bias)
+        return unit
+
+    def test_empty_activation_defaults_to_tanh(self):
+        unit = self._unit([1, 1], 0, '')
+        self.assertAlmostEqual(unit([1, 1]).data, math.tanh(2))
+
+    def test_unknown_activation_defaults_to_tanh(self):
+        unit = self._unit([1, 1], 0, 'bogus')
+        self.assertAlmostEqual(unit([1, 1]).data, math.tanh(2))
+
+    def test_sigmoid_activation(self):
+        unit = self._unit([0], 0, 'sigmoid')
+        self.assertAlmostEqual(unit([1]).data, 0.5)
+
+    def test_relu_activation_clamps_negative(self):
+        unit = self._unit([-1], 0, 'relu')
+        self.assertEqual(unit([1]).data, 0)
+
+    def test_repr_mentions_weight_count_and_activation(self):
+        unit = neuron(4, 'relu')
+        text = repr(unit)
+        self.assertIn('weights: 4', text)
+        self.assertIn("'Relu'", text)
+
+
+class LayerActivationTests(unittest.TestCase):
+
+    def test_parameters_are_all_values(self):
+        dense = layer(2, 3)
+        self.assertTrue(all(isinstance(p, value) for p in dense.parameters()))
+
+    def test_zero_grad_resets_layer_parameters(self):
+        dense = layer(2, 3)
+        for param in dense.parameters():
+            param.gradient = 9
+
+        dense.zero_grad()
+
+        self.assertTrue(all(p.gradient == 0 for p in dense.parameters()))
+
+
+class NetworkBehaviorTests(unittest.TestCase):
+
+    def test_call_returns_value(self):
+        model = network(2, [3, 1], 'tanh')
+        self.assertIsInstance(model([1, 0]), value)
+
+    def test_predict_is_deterministic(self):
+        model = network(2, [3, 1], 'tanh')
+        self.assertEqual(model.predict([[1, 0]]), model.predict([[1, 0]]))
+
+    def test_fit_with_zero_epochs_leaves_parameters_unchanged(self):
+        model = network(2, [2, 1], 'tanh')
+        before = [p.data for p in model.parameters()]
+
+        model.fit([[0, 0], [1, 1]], [0, 1], epochs=0)
+
+        self.assertEqual(before, [p.data for p in model.parameters()])
+
+    def test_svm_loss_with_batch_size(self):
+        model = network(2, [3, 1], 'tanh')
+        x = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+        y = np.array([-1, 1, 1, -1])
+
+        loss, accuracy = model.svm_loss(x, y, batch_size=2)
+
+        self.assertIsInstance(loss, value)
+        self.assertGreaterEqual(accuracy, 0)
+        self.assertLessEqual(accuracy, 1)
+
+    def test_summary_prints_parameter_total(self):
+        model = network(2, [3, 1], 'tanh')
+        output = io.StringIO()
+
+        with contextlib.redirect_stdout(output):
+            model.summary()
+
+        self.assertIn('Total number of parameters: 13', output.getvalue())
+
+    def test_repr_mentions_layer_count(self):
+        self.assertIn('2 layers', repr(network(2, [3, 1], 'tanh')))
 
 
 if __name__ == '__main__':

@@ -146,6 +146,92 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(status, 404)
         self.assertEqual(body['error'], 'not_found')
 
+    def test_predict_rejects_non_numeric_values(self):
+        status, body = self._request('POST', '/predict', {'inputs': [['a', 'b']]})
+
+        self.assertEqual(status, 400)
+        self.assertEqual(body['error'], 'bad_request')
+
+    def test_predict_rejects_empty_inputs(self):
+        status, body = self._request('POST', '/predict', {'inputs': []})
+
+        self.assertEqual(status, 400)
+        self.assertEqual(body['error'], 'bad_request')
+
+    def test_predict_rejects_booleans(self):
+        status, body = self._request('POST', '/predict', {'inputs': [[True, False]]})
+
+        self.assertEqual(status, 400)
+        self.assertEqual(body['error'], 'bad_request')
+
+    def test_train_rejects_non_numeric_outputs(self):
+        status, body = self._request(
+            'POST',
+            '/train',
+            {'inputs': [[0, 0]], 'outputs': ['a'], 'epochs': 1},
+        )
+
+        self.assertEqual(status, 400)
+        self.assertEqual(body['error'], 'bad_request')
+
+    def test_train_rejects_wrong_row_width(self):
+        status, body = self._request(
+            'POST',
+            '/train',
+            {'inputs': [[0, 0, 0]], 'outputs': [0], 'epochs': 1},
+        )
+
+        self.assertEqual(status, 400)
+        self.assertEqual(body['error'], 'bad_request')
+
+    def test_train_rejects_out_of_range_epochs(self):
+        for epochs in (0, -5, server.MAX_EPOCHS + 1):
+            with self.subTest(epochs=epochs):
+                status, body = self._request(
+                    'POST',
+                    '/train',
+                    {'inputs': [[0, 0]], 'outputs': [0], 'epochs': epochs},
+                )
+                self.assertEqual(status, 400)
+                self.assertEqual(body['error'], 'bad_request')
+
+    def test_train_rejects_non_integer_epochs(self):
+        status, body = self._request(
+            'POST',
+            '/train',
+            {'inputs': [[0, 0]], 'outputs': [0], 'epochs': 1.5},
+        )
+
+        self.assertEqual(status, 400)
+        self.assertEqual(body['error'], 'bad_request')
+
+    def test_model_partial_update_keeps_other_fields(self):
+        status, body = self._request('POST', '/model', {'activation': 'sigmoid'})
+
+        self.assertEqual(status, 200)
+        self.assertEqual(body['model']['num_in'], 2)
+        self.assertEqual(body['model']['layer_sizes'], [3, 1])
+        self.assertEqual(body['model']['activation'], 'sigmoid')
+
+    def test_model_rejects_invalid_num_in(self):
+        for value_ in (True, 0, '2'):
+            with self.subTest(num_in=value_):
+                status, body = self._request('POST', '/model', {'num_in': value_})
+                self.assertEqual(status, 400)
+                self.assertEqual(body['error'], 'bad_request')
+
+    def test_model_rejects_empty_layer_sizes(self):
+        status, body = self._request('POST', '/model', {'layer_sizes': []})
+
+        self.assertEqual(status, 400)
+        self.assertEqual(body['error'], 'bad_request')
+
+    def test_model_rejects_non_integer_layer_size(self):
+        status, body = self._request('POST', '/model', {'layer_sizes': [2, 'a']})
+
+        self.assertEqual(status, 400)
+        self.assertEqual(body['error'], 'bad_request')
+
 
 if __name__ == '__main__':
     unittest.main()
