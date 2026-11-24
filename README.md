@@ -96,6 +96,16 @@ Endpoints:
 - `POST /predict` — body `{"inputs": [[0, 0], [1, 1]]}`, returns `predictions`.
 - `POST /train` — body `{"inputs": [[0, 0]], "outputs": [0], "epochs": 100}`, trains in place and returns the training log.
 
+### Running the tests
+
+The test suite uses `pytest` and covers the autograd engine, the network
+components and the HTTP endpoints (via `fastapi.testclient`).
+
+```bash
+pip install -r requirements.txt
+pytest
+```
+
 ## Project structure
 
 ```
@@ -103,6 +113,7 @@ scalarflow/__init__.py  # exposes the engine and nn modules
 scalarflow/engine.py    # autograd value class and graph visualization
 scalarflow/nn.py        # module, neuron, layer, network and losses
 scalarflow/server.py    # FastAPI server exposing the network over HTTP
-requirements.txt        # runtime and server dependencies
+requirements.txt        # runtime, server and test dependencies
+tests/                  # pytest suite for the engine, nn and server
 testing_sclarflow.ipynb # example notebook: data, training and plots
 ```
