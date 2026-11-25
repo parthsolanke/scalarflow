@@ -1,4 +1,4 @@
-# ScalarFlow
+# ML lib
 
 ![nn_vizorg](vizorg.png)
 
