@@ -49,10 +49,10 @@ print("d =", d)  # Output: d = value(data = 6, grad = 2)
 Neural Network Library
 ```python
 # Example usage of the neural network library
-from scalarflow.nn import network
+from scalarflow.nn import Model
 
 # Create a neural network model
-model = network(num_in=2, layer_sizes=[4, 2, 1], unit_activation='relu')
+model = Model(num_in=2, layer_sizes=[4, 2, 1], unit_activation='relu')
 
 # Print the network architecture summary
 model.summary()

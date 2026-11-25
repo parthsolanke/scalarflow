@@ -52,7 +52,7 @@ class layer(module):
         def __repr__(self):
             return f"\nlayer of {len(self.neurons)} neurons: [{', '.join(str(n) for n in self.neurons)}]"   
         
-class network(module):
+class Model(module):
     
     # num_out = list which defines size of each layer, num_in = number of inputs
     def __init__(self, num_in, layer_sizes, unit_activation = ''):
